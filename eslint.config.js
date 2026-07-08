@@ -23,6 +23,14 @@ export default defineConfig([
     plugins: {
       'check-file': checkFile,
     },
+    settings: {
+      'import/resolver': {
+        typescript: {
+          alwaysTryTypes: true, // Always try to resolve types under <root>@types
+          project: './tsconfig.app.json', // 👈 Point this to the tsconfig file containing your paths!
+        },
+      },
+    },
     rules: {
       'prettier/prettier': 'error',
       'import/no-restricted-paths': [
