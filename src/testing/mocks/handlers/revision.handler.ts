@@ -42,6 +42,12 @@ function compareStrings(left: string, right: string): number {
   return left.localeCompare(right, undefined, { sensitivity: 'base' });
 }
 
+function getPositiveInteger(value: string | null, fallback: number): number {
+  const parsedValue = Number.parseInt(value ?? '', 10);
+
+  return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : fallback;
+}
+
 export const handlers = [
   http.get('/api/revisions', ({ request }) => {
     const url = new URL(request.url);
@@ -60,7 +66,14 @@ export const handlers = [
 
     const orderDirection = url.searchParams.get('orderDirection') === 'asc' ? 1 : -1;
 
-    const revisions = db.revisions
+    const page = getPositiveInteger(url.searchParams.get('page'), 1);
+
+    const limit = getPositiveInteger(
+      url.searchParams.get('limit') ?? url.searchParams.get('pageSize'),
+      10,
+    );
+
+    const filteredRevisions = db.revisions
       .map(getExtendedRevision)
       .filter((revision) => {
         if (statusFilters.length > 0 && !statusFilters.includes(revision.status)) {
@@ -85,8 +98,20 @@ export const handlers = [
         return comparison * orderDirection;
       });
 
+    const total = filteredRevisions.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const currentPage = Math.min(page, totalPages);
+    const startIndex = (currentPage - 1) * limit;
+    const revisions = filteredRevisions.slice(startIndex, startIndex + limit);
+
     return HttpResponse.json({
       data: revisions,
+      page: currentPage,
+      limit,
+      total,
+      totalPages,
+      hasNextPage: currentPage < totalPages,
+      hasPreviousPage: currentPage > 1,
     });
   }),
 
