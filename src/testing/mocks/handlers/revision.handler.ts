@@ -105,12 +105,14 @@ export const handlers = [
 
     return HttpResponse.json({
       data: revisions,
-      page: currentPage,
-      limit,
-      total,
-      totalPages,
-      hasNextPage: currentPage < totalPages,
-      hasPreviousPage: currentPage > 1,
+      meta: {
+        page: currentPage,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: currentPage < totalPages,
+        hasPreviousPage: currentPage > 1,
+      },
     });
   }),
 
