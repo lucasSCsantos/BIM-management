@@ -1,6 +1,5 @@
 import { http, HttpResponse } from 'msw';
 import { db } from '../db';
-import { createRevision } from '../factories/revision.factory';
 import { faker } from '@faker-js/faker';
 import type { Revision } from '@/types/revision.types';
 import type { Model } from '@/types/model.types';
@@ -116,6 +115,12 @@ export const handlers = [
   }),
 
   http.get('/api/revisions/:id', ({ params }) => {
+    const revision = db.revisions.find((revision) => revision.id === params.id);
+
+    if (!revision) {
+      return HttpResponse.json({ status: 404, message: 'Revisão não encontrada.' });
+    }
+
     return HttpResponse.json({
       data: db.revisions.find((revision) => revision.id === params.id) || null,
     });
@@ -124,11 +129,11 @@ export const handlers = [
   http.post('/api/revisions', async ({ request }) => {
     const body = (await request.json()) as Revision;
 
-    const revision = createRevision(
-      faker.helpers.arrayElement(db.models),
-      faker.helpers.arrayElement(db.professionals),
-      body,
-    );
+    const revision: Revision = {
+      ...body,
+      id: faker.string.uuid(),
+      createdAt: new Date().toISOString(),
+    };
 
     db.revisions.push(revision);
 
