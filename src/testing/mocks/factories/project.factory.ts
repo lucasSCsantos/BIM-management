@@ -10,7 +10,7 @@ export function createProject(overrides?: Partial<Project>): Project {
     code: faker.string.alphanumeric({ length: 5 }).toUpperCase(),
     name: faker.company.name(),
     client: faker.person.fullName(),
-    status: faker.helpers.arrayElement([]),
+    status: faker.helpers.arrayElement(['IN_PROGRESS', 'IN_REVIEW', 'FINISHED']),
     startDate,
     expectedEndDate,
     ...overrides,
