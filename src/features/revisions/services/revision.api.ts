@@ -53,16 +53,16 @@ export async function getRevisions(params: GetRevisionsParams = {}) {
 
   const queryString = queryParams.toString();
 
-  const { data } = await api.get(`/revisions${queryString ? `?${queryString}` : ''}`);
+  const { data } = await api.get<Revision[]>(`/revisions${queryString ? `?${queryString}` : ''}`);
   return data;
 }
 
 export async function getRevision(id: string) {
-  const { data } = await api.get(`/revisions/${id}`);
+  const { data } = await api.get<Revision>(`/revisions/${id}`);
   return data;
 }
 
 export async function createRevision(revision: Partial<Revision>) {
-  const { data } = await api.post('/revisions', revision);
+  const { data } = await api.post<Revision>('/revisions', revision);
   return data;
 }
