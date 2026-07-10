@@ -1,18 +1,17 @@
 import { api } from '@/lib/api';
-import type { Revision, RevisionStatus } from '@/types/revision.types';
+import type {
+  DefaultCreateResponse,
+  DefaultGetResponse,
+  DefaultListResponse,
+} from '@/types/api.types';
+import type { GetRevisionsParams } from '../types/revision-api.types';
+import type { Revision } from '@/types/revision.types';
 
-type RevisionOrderBy = 'date' | 'projectName';
+type GetRevisionsResponse = DefaultListResponse<Revision>;
 
-export type GetRevisionsParams = {
-  page?: number;
-  limit?: number;
-  pageSize?: number;
-  search?: string;
-  projectName?: string;
-  status?: RevisionStatus | RevisionStatus[];
-  orderBy?: RevisionOrderBy;
-  orderDirection?: 'asc' | 'desc';
-};
+type GetRevisionResponse = DefaultGetResponse<Revision>;
+
+type CreateRevisionResponse = DefaultCreateResponse<Revision>;
 
 export async function getRevisions(params: GetRevisionsParams = {}) {
   const queryParams = new URLSearchParams();
@@ -53,16 +52,18 @@ export async function getRevisions(params: GetRevisionsParams = {}) {
 
   const queryString = queryParams.toString();
 
-  const { data } = await api.get<Revision[]>(`/revisions${queryString ? `?${queryString}` : ''}`);
+  const { data } = await api.get<GetRevisionsResponse>(
+    `/revisions${queryString ? `?${queryString}` : ''}`,
+  );
   return data;
 }
 
 export async function getRevision(id: string) {
-  const { data } = await api.get<Revision>(`/revisions/${id}`);
+  const { data } = await api.get<GetRevisionResponse>(`/revisions/${id}`);
   return data;
 }
 
 export async function createRevision(revision: Partial<Revision>) {
-  const { data } = await api.post<Revision>('/revisions', revision);
+  const { data } = await api.post<CreateRevisionResponse>('/revisions', revision);
   return data;
 }
