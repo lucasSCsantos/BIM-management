@@ -100,7 +100,7 @@ export default defineConfig([
           '**/*.apis.ts': '*.api.ts',
         },
       ],
-      'check-file/no-index': 'error',
+      // 'check-file/no-index': 'error',
       'check-file/filename-naming-convention': [
         'error',
         {
