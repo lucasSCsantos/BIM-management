@@ -1,17 +1,16 @@
-import { Suspense } from 'react';
 // import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { QueryClient } from '@tanstack/react-query';
 import { createBrowserRouter } from 'react-router';
-// import { queryClient } from '@/lib/react-query';
+import { queryClient } from '@/lib/react-query';
 // import type { PreinitModuleOptions, PreloadModuleOptions } from 'react-dom';
 
-function withSuspense(Component: React.LazyExoticComponent<React.ComponentType>) {
-  return (
-    <Suspense fallback={<div className="p-8 text-center text-sm text-gray-500">Carregando...</div>}>
-      <Component />
-    </Suspense>
-  );
-}
+// function withSuspense(Component: React.LazyExoticComponent<React.ComponentType>) {
+//   return (
+//     <Suspense fallback={<div className="p-8 text-center text-sm text-gray-500">Carregando...</div>}>
+//       <Component />
+//     </Suspense>
+//   );
+// }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
 const convert = (queryClient: QueryClient) => (module: any) => {
@@ -26,15 +25,14 @@ const convert = (queryClient: QueryClient) => (module: any) => {
     ...rest,
     // loader: clientLoader?.(queryClient),
     // action: clientAction?.(queryClient),
-    Component: withSuspense(Component) || DefaultComponent,
+    Component: Component || DefaultComponent,
   };
 };
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    // lazy: () =>
-    //   import('@/features/revisions/routes/RevisionsDashboardPage').then(convert(queryClient)),
+    lazy: () => import('@/app/routes/dashboard/page').then(convert(queryClient)),
   },
   {
     path: '/revisions/new',

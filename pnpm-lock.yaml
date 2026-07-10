@@ -20,9 +20,6 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.4.0
         version: 5.4.0(react-hook-form@7.81.0(react@19.2.7))
-      '@tailwindcss/vite':
-        specifier: ^4.3.2
-        version: 4.3.2(vite@8.1.3(@types/node@24.13.2)(jiti@2.7.0)(yaml@2.9.0))
       '@tanstack/react-query':
         specifier: ^5.101.2
         version: 5.101.2(react@19.2.7)
@@ -59,9 +56,6 @@ importers:
       tailwind-merge:
         specifier: ^3.6.0
         version: 3.6.0
-      tailwindcss:
-        specifier: ^4.3.2
-        version: 4.3.2
       tw-animate-css:
         specifier: ^1.4.0
         version: 1.4.0
@@ -90,6 +84,9 @@ importers:
       '@rolldown/plugin-babel':
         specifier: ^0.2.3
         version: 0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.4)(vite@8.1.3(@types/node@24.13.2)(jiti@2.7.0)(yaml@2.9.0))
+      '@tailwindcss/vite':
+        specifier: ^4.3.2
+        version: 4.3.2(vite@8.1.3(@types/node@24.13.2)(jiti@2.7.0)(yaml@2.9.0))
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1
@@ -156,6 +153,9 @@ importers:
       shadcn:
         specifier: ^4.13.0
         version: 4.13.0(typescript@6.0.3)
+      tailwindcss:
+        specifier: ^4.3.2
+        version: 4.3.2
       typescript:
         specifier: ~6.0.2
         version: 6.0.3
