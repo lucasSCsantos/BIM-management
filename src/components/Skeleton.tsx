@@ -1,30 +1,20 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import * as React from 'react';
+
+import { Skeleton as BaseSkeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
-const skeletonVariants = cva('animate-pulse bg-muted', {
-  variants: {
-    /** Visual shape of the placeholder. */
-    variant: {
-      rect: 'rounded-md',
-      text: 'rounded-sm h-4',
-      circle: 'rounded-full',
-    },
-  },
-  defaultVariants: {
-    variant: 'rect',
-  },
-});
+export type SkeletonVariant = 'text' | 'rectangular' | 'circular';
 
-/** Props for {@link Skeleton}. */
-export interface SkeletonProps
-  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof skeletonVariants> {}
+export interface SkeletonProps extends React.ComponentPropsWithoutRef<typeof BaseSkeleton> {
+  variant?: SkeletonVariant;
+}
 
-/**
- * Loading placeholder with a pulse animation.
- * Pass `className` to control width/height and `variant` for the shape.
- */
-export function Skeleton({ className, variant, ...props }: SkeletonProps) {
-  return (
-    <div aria-hidden="true" className={cn(skeletonVariants({ variant }), className)} {...props} />
-  );
+const skeletonVariants: Record<SkeletonVariant, string> = {
+  text: 'h-4 rounded-md',
+  rectangular: 'rounded-md',
+  circular: 'rounded-full',
+};
+
+export function Skeleton({ variant = 'rectangular', className, ...props }: SkeletonProps) {
+  return <BaseSkeleton className={cn(skeletonVariants[variant], className)} {...props} />;
 }

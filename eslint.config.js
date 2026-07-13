@@ -104,6 +104,8 @@ export default defineConfig([
       'check-file/filename-naming-convention': [
         'error',
         {
+          'src/components/**/*-table.tsx': 'KEBAB_CASE',
+
           'src/components/**/*.{jsx,tsx}': 'PASCAL_CASE',
 
           'src/hooks/**/*.ts': 'CAMEL_CASE',

@@ -1,38 +1,33 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import * as React from 'react';
 
-/** Props for {@link ErrorBoundary}. */
 export interface ErrorBoundaryProps {
-  /** UI rendered when a child throws during render. */
-  fallback: ReactNode;
-  /** Subtree protected by the boundary. */
-  children: ReactNode;
+  fallback: React.ReactNode;
+  children: React.ReactNode;
 }
 
 interface ErrorBoundaryState {
   hasError: boolean;
 }
 
-/**
- * Generic React error boundary. Isolates render failures in its subtree so the
- * rest of the app keeps working, and logs the error to the console.
- */
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { hasError: false };
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  state: ErrorBoundaryState = {
+    hasError: false,
+  };
 
   static getDerivedStateFromError(): ErrorBoundaryState {
     return { hasError: true };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo): void {
-    // Log locally for debugging. This is where an observability tool
-    // (e.g. Sentry) would be wired up, e.g. Sentry.captureException(error).
-    console.error('[ErrorBoundary] Uncaught error:', error, info);
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Integrate Sentry or another error tracking tool here.
+    console.error('ErrorBoundary caught an error', error, errorInfo);
   }
 
-  render(): ReactNode {
+  render() {
     if (this.state.hasError) {
       return this.props.fallback;
     }
+
     return this.props.children;
   }
 }

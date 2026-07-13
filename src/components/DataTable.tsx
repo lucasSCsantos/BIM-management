@@ -1,103 +1,236 @@
-import type { ReactNode } from 'react';
+import * as React from 'react';
+
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Skeleton } from '@/components/Skeleton';
 import { cn } from '@/lib/utils';
-import { Skeleton } from './Skeleton';
+import type { PaginatedResponseMeta } from '@/types/api.types';
 
-/** Describes a single column of {@link DataTable}. */
-export interface Column<T> {
-  /** Unique key; used as React key and to read `row[key]` when no `render`. */
+export type DataTableColumn<T> = {
   key: string;
-  /** Column header text. */
   header: string;
-  /** Custom cell renderer. Falls back to `String(row[key])` when omitted. */
-  render?: (row: T) => ReactNode;
-}
+  render?: (row: T) => React.ReactNode;
+};
 
-/** Props for {@link DataTable}. */
+export type DataTablePaginationProps = PaginatedResponseMeta & {
+  onPageChange: (page: number) => void;
+};
+
 export interface DataTableProps<T> {
-  /** Column definitions. */
-  columns: Column<T>[];
-  /** Row data. */
+  columns: Array<DataTableColumn<T>>;
   rows: T[];
-  /** Shows skeleton rows while true. */
-  loading?: boolean;
-  /** Number of skeleton rows to render while loading. @default 5 */
-  skeletonRows?: number;
-  /** Message shown when there are no rows and not loading. */
-  emptyMessage?: ReactNode;
-  /** Optional row click handler. */
-  onRowClick?: (row: T) => void;
+  isLoading?: boolean;
+  loadingRowCount?: number;
+  emptyMessage?: React.ReactNode;
+  pagination?: DataTablePaginationProps;
   className?: string;
 }
 
-/**
- * Generic, domain-agnostic table. Renders columns/rows as provided, with
- * built-in loading (skeleton) and empty states.
- */
+function resolveCellValue(value: unknown): React.ReactNode {
+  if (
+    React.isValidElement(value) ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'bigint'
+  ) {
+    return value;
+  }
+
+  if (typeof value === 'boolean') {
+    return value ? 'Sim' : 'Não';
+  }
+
+  if (value == null) {
+    return '—';
+  }
+
+  return String(value);
+}
+
+function getPaginationState(pagination: DataTablePaginationProps) {
+  const totalItems = Math.max(0, pagination.total);
+  const totalPages = Math.max(0, pagination.totalPages);
+  const currentPage = totalPages > 0 ? Math.min(Math.max(pagination.page, 1), totalPages) : 0;
+
+  if (totalPages === 0) {
+    return {
+      currentPage,
+      totalPages,
+      startItem: 0,
+      endItem: 0,
+    };
+  }
+
+  return {
+    currentPage,
+    totalPages,
+    startItem: totalItems === 0 ? 0 : (currentPage - 1) * pagination.limit + 1,
+    endItem: Math.min(currentPage * pagination.limit, totalItems),
+  };
+}
+
+function PaginationSummary({
+  startItem,
+  endItem,
+  totalItems,
+}: {
+  startItem: number;
+  endItem: number;
+  totalItems: number;
+}) {
+  return (
+    <p className="text-sm text-muted-foreground">
+      Mostrando {startItem}–{endItem} de {totalItems}
+    </p>
+  );
+}
+
+function PaginationControls({
+  currentPage,
+  totalPages,
+  hasNextPage,
+  hasPreviousPage,
+  onPageChange,
+}: DataTablePaginationProps & { currentPage: number; totalPages: number }) {
+  const isFirstPage = !hasPreviousPage || currentPage <= 1;
+  const isLastPage = !hasNextPage || currentPage >= totalPages;
+
+  const handlePageChange = (nextPage: number) => (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+
+    if (nextPage < 1 || nextPage > totalPages) {
+      return;
+    }
+
+    onPageChange(nextPage);
+  };
+
+  const controlClassName = 'transition-opacity';
+  const disabledClassName = 'pointer-events-none opacity-50';
+
+  return (
+    <Pagination className="mx-0 w-auto justify-end">
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            href="#"
+            text="Anterior"
+            aria-disabled={isFirstPage}
+            tabIndex={isFirstPage ? -1 : 0}
+            onClick={handlePageChange(currentPage - 1)}
+            className={cn(controlClassName, isFirstPage && disabledClassName)}
+          />
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationNext
+            href="#"
+            text="Próxima"
+            aria-disabled={isLastPage}
+            tabIndex={isLastPage ? -1 : 0}
+            onClick={handlePageChange(currentPage + 1)}
+            className={cn(controlClassName, isLastPage && disabledClassName)}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
+  );
+}
+
 export function DataTable<T>({
   columns,
   rows,
-  loading = false,
-  skeletonRows = 5,
-  emptyMessage = 'Nenhum resultado encontrado.',
-  onRowClick,
+  isLoading = false,
+  loadingRowCount = 3,
+  emptyMessage = 'No items found.',
+  pagination,
   className,
 }: DataTableProps<T>) {
-  const isEmpty = !loading && rows.length === 0;
+  const visibleRowCount = Math.max(loadingRowCount, 1);
+  const colSpan = Math.max(columns.length, 1);
+  const paginationState = pagination ? getPaginationState(pagination) : null;
+  const shouldRenderPagination = Boolean(
+    pagination &&
+    !isLoading &&
+    rows.length > 0 &&
+    paginationState &&
+    paginationState.totalPages > 0,
+  );
 
   return (
-    <div
-      className={cn('w-full overflow-hidden rounded-lg border border-border bg-card', className)}
-    >
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-left">
-          <thead>
-            <tr className="border-b border-border">
-              {columns.map((column) => (
-                <th
-                  key={column.key}
-                  scope="col"
-                  className="px-4 py-3 text-sm font-semibold text-muted-foreground"
-                >
-                  {column.header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading
-              ? Array.from({ length: skeletonRows }).map((_, rowIndex) => (
-                  <tr key={`skeleton-${rowIndex}`} className="border-b border-border">
-                    {columns.map((column) => (
-                      <td key={column.key} className="px-4 py-3">
-                        <Skeleton variant="text" className="w-3/4" />
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              : rows.map((row, rowIndex) => (
-                  <tr
-                    key={rowIndex}
-                    onClick={onRowClick ? () => onRowClick(row) : undefined}
-                    className={cn(
-                      'border-b border-border last:border-b-0',
-                      onRowClick && 'cursor-pointer transition-colors hover:bg-muted',
-                    )}
-                  >
-                    {columns.map((column) => (
-                      <td key={column.key} className="px-4 py-3 text-base text-foreground">
-                        {column.render
-                          ? column.render(row)
-                          : String((row as Record<string, unknown>)[column.key] ?? '')}
-                      </td>
-                    ))}
-                  </tr>
+    <div className={cn('w-full', className)}>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {columns.map((column) => (
+              <TableHead key={column.key}>{column.header}</TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            Array.from({ length: visibleRowCount }).map((_, rowIndex) => (
+              <TableRow key={`loading-row-${rowIndex}`}>
+                {columns.map((column, columnIndex) => (
+                  <TableCell key={`${column.key}-${columnIndex}`}>
+                    <Skeleton
+                      variant="text"
+                      className={cn('h-4', columnIndex === 0 ? 'w-3/4' : 'w-full')}
+                    />
+                  </TableCell>
                 ))}
-          </tbody>
-        </table>
-      </div>
+              </TableRow>
+            ))
+          ) : rows.length > 0 ? (
+            rows.map((row, rowIndex) => (
+              <TableRow key={rowIndex}>
+                {columns.map((column) => (
+                  <TableCell key={column.key}>
+                    {column.render
+                      ? column.render(row)
+                      : resolveCellValue((row as Record<string, unknown>)[column.key])}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell
+                colSpan={colSpan}
+                className="py-8 text-center text-sm text-muted-foreground"
+              >
+                {emptyMessage}
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
 
-      {isEmpty ? (
-        <div className="px-4 py-12 text-center text-base text-muted-foreground">{emptyMessage}</div>
+      {shouldRenderPagination && pagination && paginationState ? (
+        <div className="mt-4 flex flex-col gap-4 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <PaginationSummary
+            startItem={paginationState.startItem}
+            endItem={paginationState.endItem}
+            totalItems={pagination.total}
+          />
+          <PaginationControls
+            {...pagination}
+            currentPage={paginationState.currentPage}
+            totalPages={paginationState.totalPages}
+          />
+        </div>
       ) : null}
     </div>
   );

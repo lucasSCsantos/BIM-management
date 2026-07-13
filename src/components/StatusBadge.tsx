@@ -1,41 +1,36 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import * as React from 'react';
+
+import { Badge as BaseBadge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-const statusBadgeVariants = cva(
-  'inline-flex items-center rounded-md px-2 py-1 text-sm font-medium',
-  {
-    variants: {
-      /** Semantic color of the badge. Purely presentational. */
-      variant: {
-        success: 'bg-success text-success-foreground',
-        warning: 'bg-warning text-warning-foreground',
-        neutral: 'bg-neutral text-neutral-foreground',
-        danger: 'bg-danger text-danger-foreground',
-      },
-    },
-    defaultVariants: {
-      variant: 'neutral',
-    },
-  },
-);
+type StatusBadgeVariant = 'success' | 'warning' | 'neutral' | 'danger';
 
-/** Props for {@link StatusBadge}. */
-export interface StatusBadgeProps
-  extends
-    Omit<React.HTMLAttributes<HTMLSpanElement>, 'children'>,
-    VariantProps<typeof statusBadgeVariants> {
-  /** Text displayed inside the badge. */
-  label: string;
+const statusBadgeClasses: Record<StatusBadgeVariant, string> = {
+  success: 'border-success/20 bg-success/10 text-success',
+  warning: 'border-warning/20 bg-warning/10 text-warning',
+  neutral: 'border-border bg-muted text-muted-foreground',
+  danger: 'border-danger/20 bg-danger/10 text-danger',
+};
+
+export interface StatusBadgeProps extends Omit<
+  React.ComponentPropsWithoutRef<typeof BaseBadge>,
+  'variant'
+> {
+  variant?: StatusBadgeVariant;
 }
 
-/**
- * Generic colored badge. The consumer maps business meaning to a `variant`;
- * the component itself holds no domain logic.
- */
-export function StatusBadge({ variant, label, className, ...props }: StatusBadgeProps) {
+export function StatusBadge({ variant = 'neutral', className, ...props }: StatusBadgeProps) {
   return (
-    <span className={cn(statusBadgeVariants({ variant }), className)} {...props}>
-      {label}
-    </span>
+    <BaseBadge
+      variant="outline"
+      className={cn(
+        'h-6 rounded-lg px-2 py-1 text-sm font-medium',
+        statusBadgeClasses[variant],
+        className,
+      )}
+      {...props}
+    />
   );
 }
+
+export type { StatusBadgeVariant };

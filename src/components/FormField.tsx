@@ -1,84 +1,67 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { forwardRef } from 'react';
+import * as React from 'react';
+
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
-type BaseProps = {
-  /** Text shown in the field label. */
+type BaseFormFieldProps = {
   label: string;
-  /** Error message rendered below the control. */
   error?: string;
-  /** Extra classes applied to the outer wrapper. */
+  containerClassName?: string;
+  labelClassName?: string;
   className?: string;
 };
 
-type InputFieldProps = BaseProps & {
-  as?: 'input';
-} & React.InputHTMLAttributes<HTMLInputElement>;
+type InputFieldProps = BaseFormFieldProps &
+  Omit<React.ComponentPropsWithoutRef<typeof Input>, 'className' | 'children'> & {
+    as?: 'input';
+    children?: never;
+  };
 
-type SelectFieldProps = BaseProps & {
-  as: 'select';
-  /** `<option>` elements for the select control. */
-  children: React.ReactNode;
-} & React.SelectHTMLAttributes<HTMLSelectElement>;
+type SelectFieldProps = BaseFormFieldProps &
+  Omit<React.ComponentPropsWithoutRef<'select'>, 'className' | 'children'> & {
+    as: 'select';
+    children: React.ReactNode;
+  };
 
-/** Props for {@link FormField}. */
 export type FormFieldProps = InputFieldProps | SelectFieldProps;
 
-const controlClasses =
-  'h-10 w-full rounded-md border bg-card px-3 text-base text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring';
+const fieldClasses =
+  'h-8 w-full rounded-lg border border-input bg-background px-2 py-1 text-base text-foreground transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-3 aria-invalid:ring-danger/20 dark:bg-input/30 dark:aria-invalid:border-danger/50 dark:aria-invalid:ring-danger/40';
 
-/**
- * Generic form field: label + control + error message. Forwards its ref to the
- * underlying element so it works with React Hook Form's `register`.
- * Renders an `<input>` by default or a `<select>` when `as="select"`.
- */
-export const FormField = forwardRef<HTMLInputElement | HTMLSelectElement, FormFieldProps>(
-  function FormField(props, ref) {
-    const { label, error, className, id, ...rest } = props;
-    const controlId = id ?? `field-${label.replace(/\s+/g, '-').toLowerCase()}`;
-    const errorId = `${controlId}-error`;
+export const FormField = React.forwardRef<HTMLInputElement | HTMLSelectElement, FormFieldProps>(
+  function FormField(
+    { as = 'input', label, error, containerClassName, labelClassName, className, id, ...props },
+    ref,
+  ) {
+    const generatedId = React.useId();
+    const fieldId = id ?? generatedId;
 
     return (
-      <div className={cn('flex flex-col gap-1', className)}>
-        <label htmlFor={controlId} className="text-sm font-medium text-foreground">
+      <div className={cn('flex w-full flex-col gap-2', containerClassName)}>
+        <Label htmlFor={fieldId} className={cn('text-sm font-medium', labelClassName)}>
           {label}
-        </label>
+        </Label>
 
-        {rest.as === 'select'
-          ? (() => {
-              const { as: _as, children, ...selectProps } = rest as SelectFieldProps;
-              return (
-                <select
-                  id={controlId}
-                  ref={ref as React.Ref<HTMLSelectElement>}
-                  aria-invalid={!!error}
-                  aria-describedby={error ? errorId : undefined}
-                  className={cn(controlClasses, error && 'border-danger')}
-                  {...selectProps}
-                >
-                  {children}
-                </select>
-              );
-            })()
-          : (() => {
-              const { as: _as, ...inputProps } = rest as InputFieldProps;
-              return (
-                <input
-                  id={controlId}
-                  ref={ref as React.Ref<HTMLInputElement>}
-                  aria-invalid={!!error}
-                  aria-describedby={error ? errorId : undefined}
-                  className={cn(controlClasses, error && 'border-danger')}
-                  {...inputProps}
-                />
-              );
-            })()}
+        {as === 'select' ? (
+          <select
+            id={fieldId}
+            ref={ref as React.Ref<HTMLSelectElement>}
+            aria-invalid={Boolean(error)}
+            className={cn(fieldClasses, className)}
+            {...(props as React.ComponentPropsWithoutRef<'select'>)}
+          />
+        ) : (
+          <Input
+            id={fieldId}
+            ref={ref as React.Ref<HTMLInputElement>}
+            aria-invalid={Boolean(error)}
+            className={cn(fieldClasses, className)}
+            {...(props as React.ComponentPropsWithoutRef<typeof Input>)}
+          />
+        )}
 
-        {error ? (
-          <p id={errorId} className="text-sm text-danger">
-            {error}
-          </p>
-        ) : null}
+        {error ? <p className="text-sm text-danger">{error}</p> : null}
       </div>
     );
   },

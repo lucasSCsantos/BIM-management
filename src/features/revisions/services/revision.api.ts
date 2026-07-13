@@ -2,12 +2,13 @@ import { api } from '@/lib/api';
 import type {
   DefaultCreateResponse,
   DefaultGetResponse,
-  DefaultListResponse,
+  PaginatedResponse,
 } from '@/types/api.types';
+import type { RevisionListItem } from '../types/revision-list-item.types';
 import type { GetRevisionsParams } from '../types/revision-api.types';
 import type { Revision } from '@/types/revision.types';
 
-type GetRevisionsResponse = DefaultListResponse<Revision>;
+type GetRevisionsResponse = PaginatedResponse<RevisionListItem>;
 
 type GetRevisionResponse = DefaultGetResponse<Revision>;
 

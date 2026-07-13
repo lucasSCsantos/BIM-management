@@ -14,7 +14,7 @@ const models = Array.from({ length: 5 }, () =>
   createModel(faker.helpers.arrayElement(projects), faker.helpers.arrayElement(disciplines)),
 );
 
-const revisions = Array.from({ length: 5 }, () =>
+const revisions = Array.from({ length: 56 }, () =>
   createRevision(faker.helpers.arrayElement(models), faker.helpers.arrayElement(professionals)),
 );
 
