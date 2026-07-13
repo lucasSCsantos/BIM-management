@@ -6,7 +6,7 @@ import type { Model } from '@/types/model.types';
 import type { Project } from '@/types/project.types';
 import type { Discipline } from '@/types/discipline.types';
 
-type RevisionOrderBy = 'date' | 'projectName';
+type RevisionSortBy = 'date' | 'status';
 
 function getRevisionModel(revision: Revision): Model | undefined {
   return db.models.find((item) => item.id === revision.modelId);
@@ -51,31 +51,26 @@ export const handlers = [
   http.get('/api/revisions', ({ request }) => {
     const url = new URL(request.url);
 
-    const statusFilters = url.searchParams
-      .getAll('status')
-      .flatMap((value) => value.split(','))
-      .map((value) => value.trim())
-      .filter(Boolean);
-
-    const searchTerm = (url.searchParams.get('search') ?? url.searchParams.get('projectName') ?? '')
-      .trim()
-      .toLowerCase();
-
-    const orderBy = (url.searchParams.get('orderBy') ?? 'date') as RevisionOrderBy;
-
-    const orderDirection = url.searchParams.get('orderDirection') === 'asc' ? 1 : -1;
+    const status = url.searchParams.get('status');
+    const projectId = url.searchParams.get('projectId');
+    const searchTerm = (url.searchParams.get('q') ?? '').trim().toLowerCase();
+    const sortBy = url.searchParams.get('sortBy') as RevisionSortBy | null;
+    const sortDirection = url.searchParams.get('sortDir') === 'asc' ? 1 : -1;
 
     const page = getPositiveInteger(url.searchParams.get('page'), 1);
 
-    const limit = getPositiveInteger(
-      url.searchParams.get('limit') ?? url.searchParams.get('pageSize'),
-      10,
-    );
+    const limit = getPositiveInteger(url.searchParams.get('pageSize'), 10);
 
     const filteredRevisions = db.revisions
       .map(getExtendedRevision)
       .filter((revision) => {
-        if (statusFilters.length > 0 && !statusFilters.includes(revision.status)) {
+        if (status && revision.status !== status) {
+          return false;
+        }
+
+        const model = getRevisionModel(revision);
+
+        if (projectId && model?.projectId !== projectId) {
           return false;
         }
 
@@ -83,18 +78,21 @@ export const handlers = [
           return true;
         }
 
-        return revision.projectName.toLowerCase().includes(searchTerm);
+        return (
+          revision.projectName.toLowerCase().includes(searchTerm) ||
+          revision.status.toLowerCase().includes(searchTerm)
+        );
       })
       .sort((left, right) => {
-        if (orderBy === 'projectName') {
-          const comparison = compareStrings(left.projectName, right.projectName);
+        if (sortBy === 'status') {
+          const comparison = compareStrings(left.status, right.status);
 
-          return comparison * orderDirection;
+          return comparison * sortDirection;
         }
 
         const comparison = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
 
-        return comparison * orderDirection;
+        return comparison * sortDirection;
       });
 
     const total = filteredRevisions.length;

@@ -21,7 +21,7 @@ import type { PaginatedResponseMeta } from '@/types/api.types';
 
 export type DataTableColumn<T> = {
   key: string;
-  header: string;
+  header: React.ReactNode;
   render?: (row: T) => React.ReactNode;
 };
 

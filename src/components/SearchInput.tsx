@@ -30,34 +30,27 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
     },
     ref,
   ) {
-    const isControlled = value !== undefined;
-    const [internalValue, setInternalValue] = React.useState(defaultValue);
-    const currentValue = isControlled ? value : internalValue;
-    const hasMountedRef = React.useRef(false);
+    const [currentValue, setCurrentValue] = React.useState(value ?? defaultValue);
+    const debounceTimerRef = React.useRef<number | undefined>(undefined);
 
     React.useEffect(() => {
-      if (isControlled) {
-        setInternalValue(value ?? '');
+      if (value !== undefined) {
+        setCurrentValue(value);
       }
-    }, [isControlled, value]);
+    }, [value]);
 
     React.useEffect(() => {
-      if (!hasMountedRef.current) {
-        hasMountedRef.current = true;
-        return;
-      }
-
-      const timer = window.setTimeout(() => {
-        onDebouncedChange?.(currentValue);
-      }, delay);
-
-      return () => window.clearTimeout(timer);
-    }, [currentValue, delay, onDebouncedChange]);
+      return () => window.clearTimeout(debounceTimerRef.current);
+    }, []);
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (!isControlled) {
-        setInternalValue(event.target.value);
-      }
+      const nextValue = event.target.value;
+
+      setCurrentValue(nextValue);
+      window.clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = window.setTimeout(() => {
+        onDebouncedChange?.(nextValue);
+      }, delay);
 
       onChange?.(event);
     };

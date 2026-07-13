@@ -1,14 +1,15 @@
-import { CircleAlert, ArchiveX } from 'lucide-react';
+import { ChevronDown, ChevronUp, CircleAlert } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { EmptyState } from '@/components/EmptyState';
 import { StatusBadge } from '@/components/StatusBadge';
 import { formatDate } from '@/utils/format-date';
-import { useRevisions } from '../hooks/use-revision';
+import { useRevisionsQuery } from '../hooks/use-revisions-query';
+import type { RevisionsFilters, RevisionsSortBy } from '../hooks/use-revisions-filters';
 import type { RevisionListItem } from '../types/revision-list-item.types';
 import type { RevisionStatus } from '@/types/revision.types';
 import { DataTable, type DataTableColumn } from '@/components/DataTable';
-import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 const statusVariantByRevisionStatus: Record<RevisionStatus, 'neutral' | 'success' | 'danger'> = {
   DRAFT: 'neutral',
@@ -16,51 +17,107 @@ const statusVariantByRevisionStatus: Record<RevisionStatus, 'neutral' | 'success
   OBSOLETE: 'danger',
 };
 
-const columns: Array<DataTableColumn<RevisionListItem>> = [
-  {
-    key: 'projectName',
-    header: 'Projeto',
-    render: (revision) => renderLinkedCell(revision.projectName, `/revisions/${revision.id}`),
-  },
-  {
-    key: 'disciplineName',
-    header: 'Disciplina',
-    render: (revision) => renderLinkedCell(revision.disciplineName, `/revisions/${revision.id}`),
-  },
-  {
-    key: 'modelName',
-    header: 'Modelo',
-    render: (revision) => renderLinkedCell(revision.modelName, `/revisions/${revision.id}`),
-  },
-  {
-    key: 'revision',
-    header: 'Revisão',
-    render: (revision) => renderLinkedCell(`R${revision.revision}`, `/revisions/${revision.id}`),
-  },
-  {
-    key: 'reviewer',
-    header: 'Responsável',
-    render: (revision) => renderLinkedCell(revision.reviewer, `/revisions/${revision.id}`),
-  },
-  {
-    key: 'createdAt',
-    header: 'Data',
-    render: (revision) =>
-      renderLinkedCell(formatDate(revision.createdAt), `/revisions/${revision.id}`),
-  },
-  {
-    key: 'status',
-    header: 'Situação',
-    render: (revision) => {
-      return renderLinkedCell(
-        <StatusBadge variant={statusVariantByRevisionStatus[revision.status]}>
-          {revision.status}
-        </StatusBadge>,
-        `/revisions/${revision.id}`,
-      );
+type RevisionsTableProps = {
+  filters: RevisionsFilters;
+};
+
+function getColumns({
+  sortBy,
+  sortDir,
+  setSort,
+}: Pick<RevisionsTableProps['filters'], 'sortBy' | 'sortDir' | 'setSort'>) {
+  return [
+    {
+      key: 'projectName',
+      header: 'Projeto',
+      render: (revision) => renderLinkedCell(revision.projectName, `/revisions/${revision.id}`),
     },
-  },
-];
+    {
+      key: 'disciplineName',
+      header: 'Disciplina',
+      render: (revision) => renderLinkedCell(revision.disciplineName, `/revisions/${revision.id}`),
+    },
+    {
+      key: 'modelName',
+      header: 'Modelo',
+      render: (revision) => renderLinkedCell(revision.modelName, `/revisions/${revision.id}`),
+    },
+    {
+      key: 'revision',
+      header: 'Revisão',
+      render: (revision) => renderLinkedCell(`R${revision.revision}`, `/revisions/${revision.id}`),
+    },
+    {
+      key: 'reviewer',
+      header: 'Responsável',
+      render: (revision) => renderLinkedCell(revision.reviewer, `/revisions/${revision.id}`),
+    },
+    {
+      key: 'createdAt',
+      header: (
+        <SortHeader
+          label="Data"
+          sortBy="date"
+          activeSortBy={sortBy}
+          sortDir={sortDir}
+          setSort={setSort}
+        />
+      ),
+      render: (revision) =>
+        renderLinkedCell(formatDate(revision.createdAt), `/revisions/${revision.id}`),
+    },
+    {
+      key: 'status',
+      header: (
+        <SortHeader
+          label="Situação"
+          sortBy="status"
+          activeSortBy={sortBy}
+          sortDir={sortDir}
+          setSort={setSort}
+        />
+      ),
+      render: (revision) => {
+        return renderLinkedCell(
+          <StatusBadge variant={statusVariantByRevisionStatus[revision.status]}>
+            {revision.status}
+          </StatusBadge>,
+          `/revisions/${revision.id}`,
+        );
+      },
+    },
+  ] satisfies Array<DataTableColumn<RevisionListItem>>;
+}
+
+function SortHeader({
+  label,
+  sortBy,
+  activeSortBy,
+  sortDir,
+  setSort,
+}: {
+  label: string;
+  sortBy: RevisionsSortBy;
+  activeSortBy: RevisionsSortBy | null;
+  sortDir: 'asc' | 'desc';
+  setSort: (sortBy: RevisionsSortBy) => void;
+}) {
+  const isActive = sortBy === activeSortBy;
+  const Icon = sortDir === 'asc' ? ChevronUp : ChevronDown;
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      className="-ml-2 text-sm text-muted-foreground hover:text-foreground"
+      onClick={() => setSort(sortBy)}
+    >
+      {label}
+      {isActive ? <Icon aria-label={sortDir === 'asc' ? 'Crescente' : 'Decrescente'} /> : null}
+    </Button>
+  );
+}
 
 function renderLinkedCell(value: React.ReactNode, to: string) {
   return (
@@ -70,7 +127,7 @@ function renderLinkedCell(value: React.ReactNode, to: string) {
   );
 }
 
-function RevisionsLoadingState() {
+function RevisionsLoadingState({ columns }: { columns: Array<DataTableColumn<RevisionListItem>> }) {
   return <DataTable columns={columns} rows={[]} isLoading loadingRowCount={5} />;
 }
 
@@ -88,42 +145,28 @@ function RevisionsErrorState({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-function RevisionsEmptyState() {
-  return (
-    <EmptyState
-      title="Nenhuma revisão cadastrada ainda"
-      description="Quando houver revisões registradas, elas aparecerão nesta tabela."
-      icon={ArchiveX}
-    />
-  );
-}
-
-export function RevisionsTable() {
-  const [page, setPage] = useState(1);
-  const { data, isLoading, isError, refetch } = useRevisions({ page });
+export function RevisionsTable({ filters }: RevisionsTableProps) {
+  const { data, isLoading, isError, refetch } = useRevisionsQuery(filters);
+  const columns = getColumns(filters);
 
   const revisions = data?.data ?? [];
   const meta = data?.meta;
 
   if (isLoading) {
-    return <RevisionsLoadingState />;
+    return <RevisionsLoadingState columns={columns} />;
   }
 
   if (isError) {
     return <RevisionsErrorState onRetry={() => void refetch()} />;
   }
 
-  if (revisions.length === 0) {
-    return <RevisionsEmptyState />;
-  }
-
   return (
     <DataTable
       columns={columns}
       rows={revisions}
-      pagination={meta ? { ...meta, onPageChange: setPage } : undefined}
+      pagination={meta ? { ...meta, onPageChange: filters.setPage } : undefined}
       loadingRowCount={5}
-      emptyMessage="Nenhuma revisão cadastrada ainda"
+      emptyMessage="Nenhuma revisão encontrada para os filtros selecionados"
     />
   );
 }

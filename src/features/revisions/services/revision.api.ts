@@ -14,41 +14,27 @@ type GetRevisionResponse = DefaultGetResponse<Revision>;
 
 type CreateRevisionResponse = DefaultCreateResponse<Revision>;
 
-export async function getRevisions(params: GetRevisionsParams = {}) {
+export async function getRevisions(params: GetRevisionsParams) {
   const queryParams = new URLSearchParams();
 
-  if (params.page != null) {
-    queryParams.set('page', String(params.page));
+  queryParams.set('page', String(params.page));
+  queryParams.set('pageSize', String(params.pageSize));
+  queryParams.set('sortDir', params.sortDir);
+
+  if (params.q.trim()) {
+    queryParams.set('q', params.q.trim());
   }
 
-  if (params.limit != null) {
-    queryParams.set('limit', String(params.limit));
-  } else if (params.pageSize != null) {
-    queryParams.set('limit', String(params.pageSize));
-  }
-
-  if (params.search?.trim()) {
-    queryParams.set('search', params.search.trim());
-  }
-
-  if (params.projectName?.trim()) {
-    queryParams.set('projectName', params.projectName.trim());
+  if (params.projectId) {
+    queryParams.set('projectId', params.projectId);
   }
 
   if (params.status) {
-    const statuses = Array.isArray(params.status) ? params.status : [params.status];
-
-    for (const status of statuses) {
-      queryParams.append('status', status);
-    }
+    queryParams.set('status', params.status);
   }
 
-  if (params.orderBy) {
-    queryParams.set('orderBy', params.orderBy);
-  }
-
-  if (params.orderDirection) {
-    queryParams.set('orderDirection', params.orderDirection);
+  if (params.sortBy) {
+    queryParams.set('sortBy', params.sortBy);
   }
 
   const queryString = queryParams.toString();

@@ -1,14 +1,13 @@
 import type { RevisionStatus } from '@/types/revision.types';
 
-type RevisionOrderBy = 'date' | 'projectName';
+type RevisionSortBy = 'date' | 'status';
 
 export interface GetRevisionsParams {
-  page?: number;
-  limit?: number;
-  pageSize?: number;
-  search?: string;
-  projectName?: string;
-  status?: RevisionStatus | RevisionStatus[];
-  orderBy?: RevisionOrderBy;
-  orderDirection?: 'asc' | 'desc';
+  q: string;
+  projectId: string | null;
+  status: RevisionStatus | null;
+  sortBy: RevisionSortBy | null;
+  sortDir: 'asc' | 'desc';
+  page: number;
+  pageSize: number;
 }
