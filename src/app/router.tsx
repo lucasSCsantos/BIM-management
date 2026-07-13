@@ -1,6 +1,7 @@
 // import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { QueryClient } from '@tanstack/react-query';
 import { createBrowserRouter } from 'react-router';
+import { AppLayout } from '@/components/layout/app-layout';
 import { queryClient } from '@/lib/react-query';
 // import type { PreinitModuleOptions, PreloadModuleOptions } from 'react-dom';
 
@@ -32,15 +33,21 @@ const convert = (queryClient: QueryClient) => (module: any) => {
 export const router = createBrowserRouter([
   {
     path: '/',
-    lazy: () => import('@/app/routes/dashboard/page').then(convert(queryClient)),
-  },
-  {
-    path: '/revisions/new',
-    // lazy: () => import('@/features/revisions/routes/RevisionCreatePage').then(convert(queryClient)),
-  },
-  {
-    path: '/revisions/:id',
-    // lazy: () =>
-    // import('@/features/revisions/routes/RevisionDetailsPage').then(convert(queryClient)),
+    Component: AppLayout,
+    children: [
+      {
+        index: true,
+        lazy: () => import('@/app/routes/dashboard/page').then(convert(queryClient)),
+      },
+      {
+        path: 'revisions/new',
+        // lazy: () => import('@/features/revisions/routes/RevisionCreatePage').then(convert(queryClient)),
+      },
+      {
+        path: 'revisions/:id',
+        // lazy: () =>
+        // import('@/features/revisions/routes/RevisionDetailsPage').then(convert(queryClient)),
+      },
+    ],
   },
 ]);

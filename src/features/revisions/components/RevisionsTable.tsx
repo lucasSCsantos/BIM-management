@@ -1,6 +1,5 @@
 import { CircleAlert, ArchiveX } from 'lucide-react';
 import { Link } from 'react-router';
-import * as React from 'react';
 
 import { EmptyState } from '@/components/EmptyState';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -9,6 +8,7 @@ import { useRevisions } from '../hooks/use-revision';
 import type { RevisionListItem } from '../types/revision-list-item.types';
 import type { RevisionStatus } from '@/types/revision.types';
 import { DataTable, type DataTableColumn } from '@/components/DataTable';
+import { useState } from 'react';
 
 const statusVariantByRevisionStatus: Record<RevisionStatus, 'neutral' | 'success' | 'danger'> = {
   DRAFT: 'neutral',
@@ -99,7 +99,7 @@ function RevisionsEmptyState() {
 }
 
 export function RevisionsTable() {
-  const [page, setPage] = React.useState(1);
+  const [page, setPage] = useState(1);
   const { data, isLoading, isError, refetch } = useRevisions({ page });
 
   const revisions = data?.data ?? [];

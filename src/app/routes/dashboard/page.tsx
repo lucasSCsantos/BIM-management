@@ -4,7 +4,7 @@ import { RevisionsTable } from '@/features/revisions/components/RevisionsTable';
 
 export function Component() {
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6">
       {/* TODO: busca e filtros entram aqui */}
       <ErrorBoundary
         fallback={
